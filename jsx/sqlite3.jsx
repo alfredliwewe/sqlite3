@@ -1,4 +1,7 @@
-const {Link,Dialog,Button,Box,Tab,Tabs,Table, TableHead, TableRow, TableCell, TableBody,TablePagination,Paper,TextField, Input} = MaterialUI;
+const {
+    Link,Dialog,Button,Box,Tab,Tabs,Table, TableHead, Chip, Alert,
+    TableRow, TableCell, TableBody,TablePagination,Paper,TextField, Input
+} = MaterialUI;
 
 const {useState,useEffect, useContext, createContext} = React;
 
@@ -26,6 +29,13 @@ function Welcome(){
         })
     }
 
+    const deleteDatabase = (row) => {
+        $.post("api/", {deleteDatabase:row.id}, res=>{
+            Toast(res);
+            getDatabases();
+        })
+    }
+
     useEffect(()=>{
         getDatabases();
     }, []);
@@ -47,6 +57,10 @@ function Welcome(){
                             }}>
                                 <font className="block">{row.name}</font>
                                 <font className="block w3-opacity w3-small">{row.dir}</font>
+                                <Chip label="Delete" variant="outlined" size="small" color="error" onClick={e=>{
+                                    e.stopPropagation();
+                                    deleteDatabase(row)
+                                }}/>
                             </div>
                         ))}
                     </div>
@@ -247,23 +261,23 @@ function DatabaseStructure(){
                     </TableHead>
                     <TableBody>
                         {tables.map((row,index)=>(
-                            <TableRow key={index}>
-                                <TableCell>
+                            <TableRow key={index} hover sx={{background:(index % 2 == 0 ? "rgba(0, 0, 0, 0.04)":"#fff")}}>
+                                <TableCell padding="none">
                                     <input type="checkbox"/>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell padding="none">
                                     <Link href="#" sx={{fontWeight:"bold"}} onClick={e=>{
                                         setActive({...active, table:row.name});
                                         setStage("table");
                                     }}>{row.name}</Link>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell padding="none">
                                     <Link sx={{pr:2}} href="#">Browse</Link>
                                     <Link sx={{pr:2}} href="#">Structure</Link>
                                     <Link sx={{pr:2}} href="#">Empty</Link>
                                     <Link sx={{pr:2}} href="#">Drop</Link>
                                 </TableCell>
-                                <TableCell>Rows</TableCell>
+                                <TableCell sx={{padding:"7px"}}>Rows</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -370,7 +384,7 @@ function TableView(){
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <Tabs value={value} onChange={handleChange} aria-label="lab API tabs example">
                         <Tab label="Browse" {...a11yProps(0)} style={{textTransform:"none"}} />
-                        <Tab label="Sql" {...a11yProps(1)} style={{textTransform:"none"}} />
+                        <Tab label="Structure" {...a11yProps(1)} style={{textTransform:"none"}} />
                         <Tab label="Export" {...a11yProps(2)} style={{textTransform:"none"}} />
                         <Tab label="Import" {...a11yProps(3)} style={{textTransform:"none"}} />
                         <Tab label="Operations" {...a11yProps(4)} style={{textTransform:"none"}} />
@@ -380,7 +394,7 @@ function TableView(){
                     <DataView/>
                 </TabPanel>
                 <TabPanel value={value} index={1}>
-                    <h3>Accidents Reports</h3>
+                    <Structure/>
                 </TabPanel>
                 <TabPanel value={value} index={2}>
                     <h3>Travel</h3>
@@ -559,7 +573,7 @@ function DataView(){
                     </TableHead>
                     <TableBody>
                         {data.rows.slice(rowsPerPage*page, (page+1)*rowsPerPage).map((row,index)=>(
-                            <TableRow hover key={index}>
+                            <TableRow hover key={index} sx={{background:(index % 2 == 0 ? "rgba(0, 0, 0, 0.04)":"#fff")}}>
                                 <TableCell sx={{p:1}} align="center">
                                     <input type="checkbox"/>
                                 </TableCell>
@@ -625,4 +639,158 @@ function loadAceLinters() {
             }
         });
     }
+}
+
+function Structure(){
+    const {active,setActive} = useContext(Context);
+    const [activeCol, setActiveCol] = useState("");
+    const [open,setOpen] = useState({
+        edit:false,
+        delete:false
+    });
+
+    const [data,setData] = useState({
+        cols:[],
+        rows:[]
+    });
+
+    const getData = () => {
+        $.get("api/", {getTableStructure:active.table, dir:active.dir, database:active.name}, function(res){
+            setData({...data, ...res});
+        })
+    }
+
+    useEffect(()=>{
+        getData();
+    })
+
+    return (
+        <Box sx={{p:2}}>
+            <Alert severity="info" variant="outlined" sx={{mb:2}}>
+                Table structure for: <b>{active.table}</b>
+            </Alert>
+            <Paper>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell></TableCell>
+                            <TableCell>Actions</TableCell>
+                            {data.cols.map((col,index)=>(
+                                <TableCell key={col}>{col}</TableCell>
+                            ))}
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {data.rows
+                        //.slice(rowsPerPage*page, (page+1)*rowsPerPage)
+                        .map((row,index)=>(
+                            <TableRow hover key={index} sx={{background:(index % 2 == 0 ? "rgba(0, 0, 0, 0.04)":"#fff")}}>
+                                <TableCell sx={{p:1}} align="center">
+                                    <input type="checkbox"/>
+                                </TableCell>
+                                <TableCell padding="none">
+                                    <Link sx={{pr:1}} href="#">Edit</Link>
+                                    <Link sx={{pr:1}} color="error" href="#" onClick={e=>{
+                                        setActiveCol(row.name);
+                                        setOpen({...open, delete:true});
+                                    }}>Delete</Link>
+                                </TableCell>
+                                {data.cols.map((col,index)=>(
+                                    <TableCell padding="none" key={"r"+index} sx={{
+                                        fontWeight:col=="name"?"bold":"normal"
+                                    }}>
+                                        {row[col] == null ? "NULL" : (row[col].length > 60 ? row[col].substr(0,60)+"..":row[col])}
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </Paper>
+
+            <Box sx={{mt:2,px:3,py:2}} className="border rounded-lg">
+                <input type="checkbox"/> Check all 
+
+                <Link href="#" sx={{mx:4}}>Change</Link>
+                <Link href="#" sx={{mx:4}}>Drop</Link>
+            </Box>
+
+            {open.delete && <Warning
+                title="Confirm"
+                secondaryText={"Are you sure you want to execute this query"}
+                action={{
+                    text:"Confirm",
+                    callback:()=>{
+                        $.post("api/", {deleteColumn:activeCol,table:active.table, dir:active.dir, database:active.name}, response=>{
+                            try{
+                                let res = JSON.parse(response);
+                                if(res.status){
+                                    setOpen({...open, delete:false});
+                                    Toast("Success");
+                                    getData();
+                                }
+                                else{
+                                    Toast(res.message);
+                                }
+                            }
+                            catch(E){
+                                alert(E.toString()+response);
+                            }
+                        })
+                    }
+                }}
+                onClose={()=>setOpen({...open, checkIn:false})}
+                view={
+                    <div className="p-2 rounded-2xl border border-red-700 text-red-900 bg-red-100">
+                        ALTER TABLE {active.table} DROP COLUMN {activeCol};
+                    </div>
+                }
+            />}
+        </Box>
+    )
+}
+
+function Warning(props){
+    const [open,setOpen] = useState(true);
+
+    useEffect(()=>{
+        if(!open){
+            if(props.onClose!= undefined){
+                props.onClose();
+            }
+        }
+    }, [open]);
+
+    return (
+        <Dialog open={open} onClose={()=>{
+            setOpen(false)
+            if(props.onClose!= undefined){
+                props.onClose();
+            }
+        }}>
+            <div className="w3-padding-large" style={{width:"300px"}}>
+                {props.title != undefined && <font className="w3-large block mb-30 block">{props.title}</font>}
+
+                {props.secondaryText != undefined && <font className="block mb-15">{props.secondaryText}</font>}
+
+                {props.view != undefined && <div className="py-2">{props.view}</div>}
+                
+                <div className="py-2 clearfix">
+                    <Button variant="contained" color="error" className="w3-round-xxlarge" sx={{textTransform:"none"}} onClick={event=>{
+                        setOpen(false)
+                        if(props.onClose!= undefined){
+                            props.onClose();
+                        }
+                    }}>Close</Button>
+                    <span className="float-right">
+                        
+                        {props.action != undefined && <Button sx={{textTransform:"none"}} className="w3-round-xxlarge" variant="contained" onClick={event=>{
+                            //setLogout(false);
+                            props.action.callback();
+                        }}>{props.action.text}</Button>}
+                    </span>
+                </div>
+            </div>
+        </Dialog>
+    )
 }

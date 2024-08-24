@@ -1,6 +1,6 @@
 <?php
-require '../../functions.php';
-require '../../includes/String.php';
+require '../functions.php';
+require '../includes/String.php';
 require 'Sql.php';
 
 $db = new mysql_like("../database.db");
@@ -64,6 +64,11 @@ elseif (isset($_GET['getDatabases'])) {
 	header('Content-Type: application/json; charset=utf-8');
 	echo json_encode($data);
 }
+elseif (isset($_POST['deleteDatabase'])) {
+	db_delete("databases", ['id' => $_POST['deleteDatabase']]);
+
+	echo "database record deleted";
+}
 elseif (isset($_POST['saveData'], $_POST['file'])) {
 	$dir = $db->real_escape_string($_POST['saveData']);
 	$file = $db->real_escape_string($_POST['file']);
@@ -88,16 +93,38 @@ elseif (isset($_GET['getTableData'], $_GET['dir'], $_GET['database'])) {
 	$table = $_GET['getTableData'];
 
 	$db3 = new mysql_like($_GET['dir'].$_GET['database']);
+	$dbx = new sqlite3($_GET['dir'].$_GET['database']);
 
 	$data = [];
 
 	$read = $db3->query("SELECT * FROM $table");
-	$data['cols'] = $read->getColumnNames();
+	$data['cols'] = getColumnNames($dbx, $table);
 	$data['rows'] = $read->store;
 
 	header('Content-Type: application/json; charset=utf-8');
 	echo json_encode($data);
 }
+elseif (isset($_GET['getTableStructure'], $_GET['dir'], $_GET['database'])) {
+	$table = $_GET['getTableStructure'];
+
+	$db3 = new sqlite3($_GET['dir'].$_GET['database']);
+
+	$columns = [];
+	$rows = [];
+
+	$read = $db3->query("PRAGMA table_info(`$table`)");
+	while ($row = $read->fetchArray(SQLITE3_ASSOC)) {
+		$columns = array_keys($row);
+		array_push($rows, $row);
+	}
+
+	header('Content-Type: application/json; charset=utf-8');
+	echo json_encode([
+		'cols' => $columns,
+		'rows' => $rows
+	]);
+}
+
 elseif (isset($_GET['runQuery'], $_GET['table'], $_GET['dir'], $_GET['database'])) {
 	$table = $_GET['table'];
 	$sql = $_GET['runQuery'];
@@ -126,6 +153,13 @@ elseif (isset($_GET['runQuery'], $_GET['table'], $_GET['dir'], $_GET['database']
 
 	//header('Content-Type: application/json; charset=utf-8');
 	echo json_encode($data);
+}
+elseif(isset($_POST['deleteColumn'], $_POST['table'], $_POST['dir'], $_POST['database'])){
+	$db = new sqlite3($_POST['dir'].$_POST['database']);
+
+	$db->query("ALTER TABLE {$_POST['table']} DROP COLUMN {$_POST['deleteColumn']}");
+
+	echo json_encode(['status' => true, 'message' => 'Success']);
 }
 elseif (isset($_POST['dir'], $_POST['db'], $_POST['new_table'])) {
 	$dir = $_POST['dir'];

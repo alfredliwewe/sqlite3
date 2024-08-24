@@ -1,17 +1,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#085a9d">
 <link rel="icon" type="image/png" href="logo.png">
-<link rel="stylesheet" type="text/css" href="../w3css/w3.css">
-<link rel="stylesheet" type="text/css" href="../w3css/w3-theme-indigo.css">
+<link rel="stylesheet" type="text/css" href="../resources/w3css/w3.css">
+<link rel="stylesheet" type="text/css" href="../resources/w3css/tailwind.css">
+<link rel="stylesheet" type="text/css" href="../resources/w3css/w3-theme-indigo.css">
 
-<script type="text/javascript" src="../vendor/jquery/jquery.min.js"></script>
-<link rel="stylesheet" href="../fontawesome/css/all.min.css">
+<script type="text/javascript" src="../resources/vendor/jquery/jquery.min.js"></script>
+<link rel="stylesheet" href="../resources/fontawesome/css/all.min.css">
 <script type="text/javascript" src="../dataTable.js"></script>
 
 <script src="../dist/sweetalert2.min.js"></script>
 <link rel="stylesheet" href="../dist/sweetalert2.min.css">
 <!--====== Default CSS ======-->
-<link rel="stylesheet" href="../w3css/default.css">
+<link rel="stylesheet" href="../resources/w3css/default.css">
 
 <!--====== Style CSS ======-->
 <link rel="stylesheet" href="../assets/css/style.css">
@@ -20,22 +21,22 @@
 <link rel="stylesheet" href="../assets/css/nice-select.css">
 <!--====== Nice Select js ======-->
 <script src="../assets/js/jquery.nice-select.min.js"></script>
-<link rel="stylesheet" type="text/css" href="../libs/toastify/src/toastify.css">
-<script type="text/javascript" src="../libs/toastify/src/toastify.js"></script>
+<link rel="stylesheet" type="text/css" href="../resources/toastify/src/toastify.css">
+<script type="text/javascript" src="../resources/toastify/src/toastify.js"></script>
 
-<link rel="stylesheet" type="text/css" href="../vendor/bootstrap/css/bootstrap.min.css">
-<link rel="stylesheet" type="text/css" href="../semantic/semantic.min.css">
+<link rel="stylesheet" type="text/css" href="../resources/vendor/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" type="text/css" href="../resources/semantic/semantic.min.css">
 
 <!--<script type="text/javascript" src="exportTable.js"></script>-->
-<script type="text/javascript" src="../../resources/react.js"></script>
-<script type="text/javascript" src="../../resources/rodz.js"></script>
-<script type="text/javascript" src="../../resources/react-dom.js"></script>
-<script type="text/javascript" src="../../resources/babel.js"></script>
-<script type="text/javascript" src="../../resources/prop-types.js"></script>
+<script type="text/javascript" src="../resources/react.js"></script>
+<script type="text/javascript" src="../resources/rodz.js"></script>
+<script type="text/javascript" src="../resources/react-dom.js"></script>
+<script type="text/javascript" src="../resources/babel.js"></script>
+<script type="text/javascript" src="../resources/prop-types.js"></script>
 
-<script type="text/javascript" src="../../resources/react-is.js"></script>
+<script type="text/javascript" src="../resources/react-is.js"></script>
 
-<script type="text/javascript" src="../../resources/material-ui.js"></script>
+<script type="text/javascript" src="../resources/material-ui.js"></script>
 <style type="text/css">
 	@font-face{
 		font-family: googleRoboto;
@@ -269,32 +270,7 @@
             background:"#dc3545"
         }).showToast();
     }
-
-	<?php 
-    if (isset($_COOKIE['theme'])) {
-        $theme = $_COOKIE['theme'];
-        ?>
-        var theme = "<?=ucfirst($_COOKIE['theme']);?>";
-        <?php
-    }
-    else{
-        $theme = "light";
-        ?>
-        var theme = "Light";
-        <?php
-    }
-    ?>
 </script>
-<style type="text/css" id="theme-changer">
-    <?php
-    if ($theme == "light") {
-        // code...
-        require '../light.css';
-    }
-    else{
-        //require '../dark.css';
-    }?>
-</style>
 <script type="text/javascript">
     
 </script>
