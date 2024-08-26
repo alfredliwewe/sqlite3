@@ -66,6 +66,11 @@ class SQLiteResult {
 
 			while ($row = $result->fetchArray(SQLITE3_ASSOC)) {
 				$count += 1;
+				foreach ($row as $key => $value) {
+					if ($value == null) {
+						$row[$key] = "NULL";
+					}
+				}
 				array_push($store, $row);
 			}
 			$this->store = $store;

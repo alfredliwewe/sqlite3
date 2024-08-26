@@ -7,6 +7,7 @@ const {useState,useEffect, useContext, createContext} = React;
 
 const Context = createContext({});
 var require;
+var format = new Intl.NumberFormat();
 
 window.onload = function(){
     ReactDOM.render(<Welcome />, document.getElementById("root"));
@@ -197,8 +198,12 @@ function DataBase(){
 function DatabaseStructure(){
     const {active,setActive,stage,setStage} = useContext(Context);
     const [tables, setTables] = useState([]);
+    const [activeTable,setActiveTable] = useState({});
+
     const [open,setOpen] = useState({
-        add:false
+        add:false,
+        empty:false,
+        drop:false
     });
     const [cols,setCols] = useState([]);
 
@@ -274,10 +279,16 @@ function DatabaseStructure(){
                                 <TableCell padding="none">
                                     <Link sx={{pr:2}} href="#">Browse</Link>
                                     <Link sx={{pr:2}} href="#">Structure</Link>
-                                    <Link sx={{pr:2}} href="#">Empty</Link>
-                                    <Link sx={{pr:2}} href="#">Drop</Link>
+                                    <Link sx={{pr:2}} href="#" onClick={e=>{
+                                        setOpen({...open, empty:true});
+                                        setActiveTable(row);
+                                    }}>Empty</Link>
+                                    <Link sx={{pr:2}} href="#" onClick={e=>{
+                                        setOpen({...open, drop:true});
+                                        setActiveTable(row);
+                                    }}>Drop</Link>
                                 </TableCell>
-                                <TableCell sx={{padding:"7px"}}>Rows</TableCell>
+                                <TableCell sx={{padding:"7px"}}>{format.format(row.rows)}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -340,6 +351,38 @@ function DatabaseStructure(){
                     </div>
                 </div>
             </Dialog>
+
+            {open.empty && <Warning
+                title="Confirm"
+                secondaryText={"Are you sure you want to execute this query"}
+                action={{
+                    text:"Confirm",
+                    callback:()=>{
+                        $.post("api/", {runQuery:"DELETE FROM "+activeTable.name,table:active.table, dir:active.dir, database:active.name}, response=>{
+                            try{
+                                let res = JSON.parse(response);
+                                //if(res.status){
+                                    setOpen({...open, delete:false});
+                                    Toast("Success");
+                                    getTables();
+                                /*}
+                                else{
+                                    Toast(res.message);
+                                }*/
+                            }
+                            catch(E){
+                                alert(E.toString()+response);
+                            }
+                        })
+                    }
+                }}
+                onClose={()=>setOpen({...open, checkIn:false})}
+                view={
+                    <div className="p-2 px-3 rounded-2xl border border-red-700 text-red-900 bg-red-100">
+                        DELETE FROM {activeTable.name};
+                    </div>
+                }
+            />}
         </>
     )
 }
@@ -388,6 +431,7 @@ function TableView(){
                         <Tab label="Export" {...a11yProps(2)} style={{textTransform:"none"}} />
                         <Tab label="Import" {...a11yProps(3)} style={{textTransform:"none"}} />
                         <Tab label="Operations" {...a11yProps(4)} style={{textTransform:"none"}} />
+                        <Tab label="Insert" {...a11yProps(5)} style={{textTransform:"none"}} />
                     </Tabs>
                 </Box>
                 <TabPanel value={value} index={0}>
@@ -404,6 +448,9 @@ function TableView(){
                 </TabPanel>
                 <TabPanel value={value} index={4}>
                     <h3>Supervisor Inspections</h3>
+                </TabPanel>
+                <TabPanel value={value} index={5}>
+                    <TableInsert />
                 </TabPanel>
             </Box>
         </>
@@ -502,7 +549,7 @@ function DataView(){
         var iframe = document.getElementById('code');
 
         // Send the value to the iframe
-        iframe.contentWindow.postMessage(JSON.stringify({type:"query", query:query}), 'http://localhost/songs/sqlite2/sample.php');
+        iframe.contentWindow.postMessage(JSON.stringify({type:"query", query:query}), '*');
     }
 
     const sendRun = () => {
@@ -513,7 +560,7 @@ function DataView(){
         var valueToSend = "run";
 
         // Send the value to the iframe
-        iframe.contentWindow.postMessage(JSON.stringify({type:"command", command:valueToSend}), 'http://localhost/songs/sqlite2/sample.php');
+        iframe.contentWindow.postMessage(JSON.stringify({type:"command", command:valueToSend}), '*');
     }
 
     const history = () => {
@@ -792,5 +839,58 @@ function Warning(props){
                 </div>
             </div>
         </Dialog>
+    )
+}
+
+function TableInsert(){
+    const {active,setActive} = useContext(Context);
+
+    const [open,setOpen] = useState({
+        edit:false,
+        delete:false
+    });
+
+    const [data,setData] = useState({
+        cols:[],
+        rows:[]
+    });
+
+    const saveData = (event) => {
+        event.preventDefault();
+    }
+
+    const getData = () => {
+        $.get("api/", {getTableStructure:active.table, dir:active.dir, database:active.name}, function(res){
+            setData({...data, ...res});
+        })
+    }
+
+    useEffect(()=>{
+        getData();
+    })
+
+    return (
+        <>
+            <div className="w3-row">
+                <div className="w3-col m3">&nbsp;</div>
+                <div className="w3-col m6">
+                    <h1>&nbsp;</h1>
+                    <h5>Insert data {active.table}</h5>
+                    <form onSubmit={saveData}>
+                        <input type="hidden" name="data_source" value={JSON.stringify(data.rows)}/>
+                        
+                        {data.rows.map((row,index)=>(
+                            <div className="pt-3">
+                                <TextField size="small" fullWidth label={row.name} name={row.name} />
+                            </div>
+                        ))}
+
+                        <div className="pt-3">
+                            <Button type="submit" variant="contained">Submit</Button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </>
     )
 }

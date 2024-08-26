@@ -83,6 +83,7 @@ elseif (isset($_GET['getTables'], $_GET['name'])) {
 
 	$tablesquery = $db3->query("SELECT name, sql FROM sqlite_master WHERE type='table';");
 	while ($row = $tablesquery->fetch_assoc()) {
+		$row['rows'] = $db3->query("SELECT * FROM {$row['name']}")->num_rows;
 		array_push($data, $row);
 	}
 
@@ -137,13 +138,14 @@ elseif (isset($_GET['runQuery'], $_GET['table'], $_GET['dir'], $_GET['database']
 	$db->query("INSERT INTO history (id,dir,database,query,`time`) VALUES (NULL, '$dir', '$database', '$save_sql', '$time')");
 
 	$db3 = new mysql_like($_GET['dir'].$_GET['database']);
+	$dbx = new sqlite3($_GET['dir'].$_GET['database']);
 
 	$data = [];
 
 	$read = $db3->query($sql);
 	$firstWord = strtolower(explode(" ", trim($sql))[0]);
 	if ($firstWord == "select") {
-		$data['cols'] = $read->getColumnNames();
+		$data['cols'] = getColumnNames($dbx,$table);
 		$data['rows'] = $read->store;
 	}
 	else{
