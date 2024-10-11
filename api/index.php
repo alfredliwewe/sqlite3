@@ -81,7 +81,7 @@ elseif (isset($_GET['getTables'], $_GET['name'])) {
 
 	$data = [];
 
-	$tablesquery = $db3->query("SELECT name, sql FROM sqlite_master WHERE type='table';");
+	$tablesquery = $db3->query("SELECT name, sql FROM sqlite_master WHERE type='table' ORDER BY name;");
 	while ($row = $tablesquery->fetch_assoc()) {
 		$row['rows'] = $db3->query("SELECT * FROM {$row['name']}")->num_rows;
 		array_push($data, $row);
@@ -112,17 +112,29 @@ elseif (isset($_GET['getTableStructure'], $_GET['dir'], $_GET['database'])) {
 
 	$columns = [];
 	$rows = [];
+	$insert_cols = [];
 
 	$read = $db3->query("PRAGMA table_info(`$table`)");
 	while ($row = $read->fetchArray(SQLITE3_ASSOC)) {
-		$columns = array_keys($row);
+		array_push($columns, $row['name']);
 		array_push($rows, $row);
+
+		if ($row['pk'] != '1') {
+			array_push($insert_cols, $row['name']);
+		}
 	}
 
-	header('Content-Type: application/json; charset=utf-8');
+	$code = "db_insert(\"$table\", [";
+	foreach ($insert_cols as $col) {
+		$code .= "\n	'".Strings::trim($col,6)."' => ,";
+	}
+	$code .= "\n]);";
+
+	//header('Content-Type: application/json; charset=utf-8');
 	echo json_encode([
 		'cols' => $columns,
-		'rows' => $rows
+		'rows' => $rows,
+		'value' => $code
 	]);
 }
 

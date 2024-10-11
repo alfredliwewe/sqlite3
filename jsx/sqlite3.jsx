@@ -279,11 +279,11 @@ function DatabaseStructure(){
                                 <TableCell padding="none">
                                     <Link sx={{pr:2}} href="#">Browse</Link>
                                     <Link sx={{pr:2}} href="#">Structure</Link>
-                                    <Link sx={{pr:2}} href="#" onClick={e=>{
+                                    <Link sx={{pr:2}} href="#" color="error" onClick={e=>{
                                         setOpen({...open, empty:true});
                                         setActiveTable(row);
                                     }}>Empty</Link>
-                                    <Link sx={{pr:2}} href="#" onClick={e=>{
+                                    <Link sx={{pr:2}} href="#" color="error" onClick={e=>{
                                         setOpen({...open, drop:true});
                                         setActiveTable(row);
                                     }}>Drop</Link>
@@ -432,6 +432,7 @@ function TableView(){
                         <Tab label="Import" {...a11yProps(3)} style={{textTransform:"none"}} />
                         <Tab label="Operations" {...a11yProps(4)} style={{textTransform:"none"}} />
                         <Tab label="Insert" {...a11yProps(5)} style={{textTransform:"none"}} />
+                        <Tab label="Code Samples" {...a11yProps(5)} style={{textTransform:"none"}} />
                     </Tabs>
                 </Box>
                 <TabPanel value={value} index={0}>
@@ -441,16 +442,19 @@ function TableView(){
                     <Structure/>
                 </TabPanel>
                 <TabPanel value={value} index={2}>
-                    <h3>Travel</h3>
+                    <h3>Export</h3>
                 </TabPanel>
                 <TabPanel value={value} index={3}>
-                    <h3>Supervisor Inspections</h3>
+                    <h3>Import</h3>
                 </TabPanel>
                 <TabPanel value={value} index={4}>
-                    <h3>Supervisor Inspections</h3>
+                    <h3>Operations</h3>
                 </TabPanel>
                 <TabPanel value={value} index={5}>
                     <TableInsert />
+                </TabPanel>
+                <TabPanel value={value} index={6}>
+                    <CodeCompletes />
                 </TabPanel>
             </Box>
         </>
@@ -860,14 +864,22 @@ function TableInsert(){
     }
 
     const getData = () => {
-        $.get("api/", {getTableStructure:active.table, dir:active.dir, database:active.name}, function(res){
-            setData({...data, ...res});
+        $.get("api/", {getTableStructure:active.table, dir:active.dir, database:active.name}, function(response){
+            try{
+                let res = JSON.parse(response);
+
+                setData({...data, ...res});
+                //Toast(res.value)
+            }
+            catch(E){
+                alert(E.toString()+response);
+            }
         })
     }
 
     useEffect(()=>{
         getData();
-    })
+    }, []);
 
     return (
         <>
@@ -891,6 +903,45 @@ function TableInsert(){
                     </form>
                 </div>
             </div>
+        </>
+    )
+}
+
+function CodeCompletes(){
+    const {active,setActive} = useContext(Context);
+    const [data,setData] = useState({
+        cols:[],
+        rows:[],
+        value:""
+    });
+
+    const saveData = (event) => {
+        event.preventDefault();
+    }
+
+    const getData = () => {
+        $.get("api/", {getTableStructure:active.table, dir:active.dir, database:active.name}, function(response){
+            try{
+                let res = JSON.parse(response);
+
+                setData({...data, ...res});
+                //Toast(res.value)
+            }
+            catch(E){
+                alert(E.toString()+response);
+            }
+        })
+    }
+
+    useEffect(()=>{
+        getData();
+    }, []);
+
+    return (
+        <>
+            <Box sx={{p:3}}>
+                <textarea style={{width:"100%"}} rows={18} className="form-control" value={data.value} />
+            </Box>
         </>
     )
 }
